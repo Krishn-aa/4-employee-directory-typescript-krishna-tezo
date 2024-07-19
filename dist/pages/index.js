@@ -1,0 +1,262 @@
+import { CSVExportService } from "../services/csvExportService.js";
+import { TableSortService } from "../services/tableSortService.js";
+import { EmployeeService } from "../services/employeeService.js";
+import { FilterService } from "../services/filterService.js";
+import { RoleService } from "../services/roleService.js";
+import { sidePanelToggle } from "./common/common.js";
+import { toggleFilterApplyButtons, applyFilter, resetAlphabetFilter, resetFilter, collapseAllDropDowns, } from "./common/common.js";
+let employeesData = [];
+let displayData = [];
+let rolesData = [];
+let tableData = [];
+let sortColumnName = "none";
+let sortDirection = "none";
+let employeeService = new EmployeeService();
+let csvService = new CSVExportService();
+let tableSortManager = new TableSortService();
+let filterService = new FilterService();
+let roleService = new RoleService();
+init();
+function init() {
+    setEmployeeData();
+    window.manageSidePanelToggle = manageSidePanelToggle;
+    window.showEllipsisMenu = showEllipsisMenu;
+    window.deleteFromEllipsisMenu = deleteFromEllipsisMenu;
+    window.searchEmployee = searchEmployee;
+    window.exportToCSV = exportToCSV;
+    window.handleAddEmployee = handleAddEmployee;
+    window.editDetails = editDetails;
+    window.manageEmployeeDeletion = manageEmployeeDeletion;
+    window.deleteAllEmployees = deleteAllEmployees;
+    window.viewDetails = viewDetails;
+    window.manageTableSorting = manageTableSorting;
+    window.manageEmployeeFilter = manageEmployeeFilter;
+    window.showFilterDropdown = showFilterDropdown;
+    window.manageApplyFilterBtn = manageApplyFilterBtn;
+    window.manageResetFilterBtn = manageResetFilterBtn;
+    window.manageResetAlphabetFilter = manageResetAlphabetFilter;
+    for (let i = 1; i <= 26; i++) {
+        const filterDiv = document.querySelector(".filter-alphabets");
+        const div = document.createElement("div");
+        div.classList.add("filter-alphabets-div");
+        div.classList.add("selectedAlphabets");
+        const char = String.fromCharCode(64 + i);
+        div.setAttribute("onclick", "manageEmployeeFilter(this)");
+        div.innerHTML = `${char}`;
+        filterDiv.appendChild(div);
+    }
+    document.onkeydown = keydown;
+    document.addEventListener("click", collapseAllDropDowns);
+}
+let isCollapsed = false;
+function manageSidePanelToggle() {
+    if (window.matchMedia("(max-width: 1200px)").matches) {
+        sidePanelToggle(isCollapsed);
+    }
+    else {
+        sidePanelToggle(isCollapsed);
+        isCollapsed = !isCollapsed;
+    }
+}
+function setEmployeeData() {
+    fetch("../../data/roles.json")
+        .then((response) => response.json())
+        .then((json) => {
+        if (!localStorage.getItem("rolesDetails")) {
+            localStorage.setItem("rolesDetails", JSON.stringify(json));
+        }
+        rolesData = JSON.parse(localStorage.getItem("rolesDetails") || "{}");
+    });
+    fetch("../../data/employees.json")
+        .then((response) => response.json())
+        .then((json) => {
+        if (!localStorage.getItem("employeesDetails")) {
+            localStorage.setItem("employeesDetails", JSON.stringify(json));
+        }
+        employeesData = JSON.parse(localStorage.getItem("employeesDetails") || "{}");
+        displayData = employeesData.slice();
+        populateTableData(displayData);
+    });
+}
+function populateTableData(employeesData) {
+    let rolesData = JSON.parse(localStorage.getItem("rolesDetails"));
+    const tableBody = document.querySelector(".employee-table-data");
+    employeesData.forEach((emp) => {
+        rolesData = roleService.addEmployeeToRole(emp.empId, emp.roleId, rolesData);
+        let activeClass = "";
+        let roleId = emp.roleId;
+        if (emp.status == "Inactive") {
+            activeClass = "inactive";
+        }
+        let row = document.createElement("tr");
+        row.classList.add("employee-table-row");
+        row.innerHTML = `
+          <td><label><input type="checkbox" name="check" id="check-box" class="row-checkbox" onchange ="manageEmployeeDeletion(this,'${emp.empId}')"/></label> </td>
+          <td>
+              <div class="table-user">
+                <img
+                  src="${emp.empProfilePic}"
+                  alt="user-profile-pic"
+                />
+                <div>
+                  <p class="user-profile-name">${emp.firstName + " " + emp.lastName}</p>
+                  <p class="user-profile-email">${emp.email}</p>
+                </div>
+              </div>
+          </td>
+          <td>${roleService.getRolesDataById(roleId, "location", rolesData)}</td>
+          <td>${roleService.getRolesDataById(roleId, "department", rolesData)}</td>
+          <td>${roleService.getRolesDataById(roleId, "roleName", rolesData)}</td>
+          <td>${emp.empId}</td>
+          <td><div class="status-btn ${activeClass}">${emp.status}</div></td>
+          <td>${emp.joinDate}</td>
+          <td>
+            <div class="ellipsis" onclick="showEllipsisMenu(this)">
+              <div class="ellipsis-icon">
+                <i class="fa-solid fa-ellipsis"></i>
+              </div>
+              <div class="ellipsis-menu">
+                <div onclick="viewDetails('${emp.empId}')">View Details</div>
+                <div onclick="editDetails('${emp.empId}')">Edit</div>
+                <div onclick="deleteFromEllipsisMenu('${emp.empId}')">Delete</div>
+              </div>
+            </div>
+          </td>
+          `;
+        tableBody.appendChild(row);
+    });
+    localStorage.setItem("rolesDetails", JSON.stringify(rolesData));
+}
+function unpopulateTableData() {
+    const tableBody = document.querySelector(".employee-table-data");
+    while (tableBody.hasChildNodes()) {
+        tableBody.removeChild(tableBody.firstChild);
+    }
+}
+function showEllipsisMenu(div) {
+    div.children[1].classList.toggle("active");
+}
+function keydown(evt) {
+    let searchbar = document.getElementById("searchbar");
+    if (evt.ctrlKey && evt.keyCode == 191) {
+        searchbar.focus();
+    }
+}
+function searchEmployee() {
+    let input = document.getElementById("searchbar");
+    input = input.value;
+    input = input.toLowerCase();
+    let rows = document.getElementsByClassName("employee-table-row");
+    for (let i = 1; i < rows.length; i++) {
+        let name = rows[i].children[1].children[0].children[1].children[0].textContent.toLowerCase();
+        if (!name.includes(input)) {
+            let currRow = rows[i];
+            currRow.style.display = "none";
+        }
+        else {
+            rows[i].style.display = "table-row";
+        }
+    }
+}
+let csvData = "";
+function exportToCSV() {
+    let employees = [];
+    employees = employeesData.slice();
+    csvData = csvService.extractHeadersForCSV(csvData, employees);
+    csvData = csvService.extractEmployeeData(csvData, employees);
+    csvService.generateCSVFile(csvData);
+}
+function handleAddEmployee() {
+    window.open("../pages/addEmployee/addEmployee.html");
+}
+function editDetails(empId) {
+    let url = "../pages/addEmployee/addEmployee.html?" +
+        "action=editemployee" +
+        "&id=" +
+        empId;
+    window.open(url);
+}
+function viewDetails(empId) {
+    let url = "../pages/addEmployee/addEmployee.html?" +
+        "action=viewemployee" +
+        "&id=" +
+        empId;
+    window.open(url);
+}
+let empIdsToDel = [];
+function manageEmployeeDeletion(checkBox, empId) {
+    const checkBoxes = document.getElementsByClassName("row-checkbox");
+    const firstCheckBox = document.querySelector(".first-checkbox");
+    const delBtn = document.querySelector(".btn-delete");
+    let countOfCheckBoxChecked = 0;
+    for (let checkBox of checkBoxes) {
+        if (checkBox.checked == true) {
+            countOfCheckBoxChecked++;
+        }
+    }
+    if (countOfCheckBoxChecked > 0)
+        delBtn.style.display = "block";
+    else
+        delBtn.style.display = "none";
+    empIdsToDel = employeeService.manageSelectedEmployees(checkBox, empId, empIdsToDel, displayData, checkBoxes, firstCheckBox, delBtn);
+}
+function deleteAllEmployees() {
+    employeesData = employeeService.deleteEmployees(empIdsToDel, displayData);
+    unpopulateTableData();
+    populateTableData(employeesData);
+    let firstCheckBox = document.querySelector(".first-checkbox");
+    firstCheckBox.checked = false;
+}
+function deleteFromEllipsisMenu(empId) {
+    empIdsToDel.push(empId);
+    deleteAllEmployees();
+}
+function manageTableSorting(columnName) {
+    tableData = displayData.slice();
+    [sortDirection, sortColumnName, tableData] =
+        tableSortManager.handleColumnSort(columnName, sortColumnName, displayData, sortDirection, rolesData);
+    unpopulateTableData();
+    populateTableData(tableData);
+}
+let selectedEmployeeFilter = {
+    selectedAlphabets: [],
+    status: [],
+    location: [],
+    department: [],
+};
+function showFilterDropdown(currFilterOption) {
+    currFilterOption.nextElementSibling.classList.toggle("active");
+    const dropDownBtnIcon = currFilterOption.children[0].children[1];
+    dropDownBtnIcon.classList.toggle("active");
+    toggleFilterApplyButtons(selectedEmployeeFilter);
+}
+function manageEmployeeFilter(element) {
+    let criteria = element.classList[1];
+    selectedEmployeeFilter = filterService.manageSelectedFilterOptions(element, selectedEmployeeFilter, criteria);
+    element.classList.toggle("active");
+    if (criteria == "selectedAlphabets") {
+        let removeFilterBtn = document.querySelector(".remove-filter-btn");
+        removeFilterBtn.src = "../../assets/interface/filter_red.svg";
+        displayData = applyFilter(selectedEmployeeFilter, employeesData, displayData);
+    }
+    else {
+        toggleFilterApplyButtons(selectedEmployeeFilter);
+    }
+    unpopulateTableData();
+    populateTableData(displayData);
+}
+function manageResetAlphabetFilter() {
+    displayData = resetAlphabetFilter(selectedEmployeeFilter, employeesData, displayData);
+    unpopulateTableData();
+    populateTableData(displayData);
+}
+function manageApplyFilterBtn() {
+    displayData = applyFilter(selectedEmployeeFilter, employeesData, displayData);
+    unpopulateTableData();
+    populateTableData(displayData);
+}
+function manageResetFilterBtn() {
+    displayData = resetFilter(selectedEmployeeFilter, employeesData, displayData);
+    unpopulateTableData();
+    populateTableData(displayData);
+}

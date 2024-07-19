@@ -1,0 +1,90 @@
+[
+  {
+    "roleId": "FulHyd",
+    "roleName": "Full Stack Developer",
+    "department": "Product Engg",
+    "roleDesc": "Handles full web development stack",
+    "employees": [],
+    "location": "Hyderabad"
+  },
+  {
+    "roleId": "FulMum",
+    "roleName": "Full Stack Developer",
+    "department": "Product Engg",
+    "roleDesc": "Handles full web development stack",
+    "employees": [],
+    "location": "Mumbai"
+  },
+  {
+    "roleId": "TalHyd",
+    "roleName": "Talent Acquisition",
+    "department": "Human Resource",
+    "roleDesc": "Recruits top talent for company",
+    "employees": [],
+    "location": "Hyderabad"
+  },
+  {
+    "roleId": "BacHyd",
+    "roleName": "Backend Developer",
+    "department": "Product Engg",
+    "roleDesc": "Develops server-side logic",
+    "employees": [],
+    "location": "Hyderabad"
+  },
+  {
+    "roleId": "BacMum",
+    "roleName": "Backend Developer",
+    "department": "Product Engg",
+    "roleDesc": "Develops server-side logic",
+    "employees": [],
+    "location": "Mumbai"
+  },
+  {
+    "roleId": "FroHyd",
+    "roleName": "Front End Developer",
+    "department": "Product Engg",
+    "roleDesc": "Creates user-facing web components",
+    "employees": [],
+    "location": "Hyderabad"
+  },
+  {
+    "roleId": "BacBan",
+    "roleName": "Backend Developer",
+    "department": "Product Engg",
+    "roleDesc": "Develops server-side logic",
+    "employees": [],
+    "location": "Bangalore"
+  },
+  {
+    "roleId": "FroMum",
+    "roleName": "Front End Developer",
+    "department": "Product Engg",
+    "roleDesc": "Creates user-facing web components",
+    "employees": [],
+    "location": "Mumbai"
+  },
+  {
+    "roleId": "FroBan",
+    "roleName": "Front End Developer",
+    "department": "Product Engg",
+    "roleDesc": "Creates user-facing web components",
+    "employees": [],
+    "location": "Bangalore"
+  },
+  {
+    "roleId": "TalMum",
+    "roleName": "Talent Acquisition",
+    "department": "Human Resource",
+    "roleDesc": "Recruits for mobile development roles",
+    "employees": [],
+    "location": "Mumbai"
+  },
+  {
+    "roleId": "FulBan",
+    "roleName": "Full Stack Developer",
+    "department": "Product Engg",
+    "roleDesc": "Handles full web development stack",
+    "employees": [],
+    "location": "Bangalore"
+  }
+]
